@@ -55,26 +55,74 @@ Optimized prompt cải thiện target từ 0.000 lên 0.765 và format từ 0 l�
 
 ## 4. Giải phẫu cấu hình sai (NB4)
 
-| Run | vị trí | r | trainable | LR | train loss (NB4) | **target (NB5 §4)** | s | VRAM GB |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| `correct` | text-linear | 16 | 32,464,896 | 0.0001 | 0.6957 | **0.975** | 1017 | 12.01 |
-| `attn_only` | q,v | matched | 32,456,704 | 0.0001 | — | **0.970** | — | — |
-| `wrong_lr` | text-linear | 16 | 32,464,896 | wrong LR | — | **0.000** | — | — |
-| `qlora` | text-linear | 16 | — | 0.0001 | — | **0.940** | — | — |
+| Run         | Vị trí      |             r | Trainable params |      LR | Train loss (NB4) | Train time (s) | Peak VRAM (GB) |
+| ----------- | ----------- | ------------: | ---------------: | ------: | ---------------: | -------------: | -------------: |
+| `correct`   | text-linear |            16 |       32,464,896 |  0.0001 |       **0.6266** |      **987.0** |      **12.01** |
+| `attn_only` | q,v only    | 283 (matched) |       32,456,704 |  0.0001 |       **0.5371** |      **816.8** |      **12.02** |
+| `wrong_lr`  | text-linear |            16 |       32,464,896 | 0.00001 |       **1.5704** |      **964.5** |      **12.01** |
+| `qlora`     | text-linear |            16 |       32,464,896 |  0.0001 |       **0.7058** |     **1026.3** |       **7.09** |
 
 ### 4.1 — `attn_only` và `correct`
 
-`attn_only` có số tham số trainable gần như bằng `correct`, lần lượt khoảng 32.457M và 32.465M. Tuy nhiên trên tập target, `correct` đạt 0.975 còn `attn_only` đạt 0.970, vì vậy `correct` thắng nhẹ. Điều này cho thấy số lượng tham số không quyết định hoàn toàn hiệu quả; vị trí gắn adapter trong toàn bộ text decoder cũng ảnh hưởng đến khả năng học task.
+`attn_only` chỉ áp dụng LoRA lên các projection `q,v` và sử dụng rank `r=283` để số lượng tham số trainable gần bằng cấu hình `correct`.
+
+Hai cấu hình có số tham số gần như tương đương:
+
+* `correct`: **32,464,896** trainable parameters.
+* `attn_only`: **32,456,704** trainable parameters.
+
+Tuy nhiên, `attn_only` đạt train loss **0.5371**, thấp hơn `correct` ở **0.6266**.
+
+Điều này cho thấy trong thí nghiệm NB4, attention-only với rank được tăng rất lớn có khả năng fit tập training tốt hơn. Tuy nhiên, đây **không phải là so sánh chỉ dựa trên rank**, vì `attn_only` sử dụng `r=283` trong khi `correct` chỉ sử dụng `r=16`.
+
+Đáng chú ý, `attn_only` cũng train nhanh hơn: **816.8 s** so với **987.0 s**, trong khi peak VRAM gần như giống nhau (**12.02 GB** và **12.01 GB**).
 
 ### 4.2 — `wrong_lr`
 
-`wrong_lr` chỉ thay đổi learning rate nhưng kết quả target giảm hoàn toàn xuống 0.000 và format cũng xuống 0.000. Nếu chỉ nhìn loss mà không kiểm tra learning rate và kết quả downstream, có thể kết luận sai rằng một đường loss thấp hoặc có vẻ hội tụ đồng nghĩa với mô hình tốt. Thực tế metric quan trọng của lab là target score và khả năng giữ general capability, không phải chỉ train loss.
+`wrong_lr` sử dụng cùng placement và rank với `correct` nhưng learning rate giảm từ **1e-4 xuống 1e-5**, tức thấp hơn **10 lần**.
+
+Kết quả:
+
+* `correct`: train loss **0.6266**
+* `wrong_lr`: train loss **1.5704**
+
+Trong quá trình training, `wrong_lr` chỉ đạt mean token accuracy khoảng **79.05%** ở cuối epoch 2, trong khi `correct` đạt khoảng **99.50%**.
+
+Kết quả này cho thấy learning rate quá thấp khiến LoRA cập nhật chậm và không đạt mức hội tụ tốt trong cùng ngân sách training.
+
+Vì vậy, `wrong_lr` là một cấu hình không phù hợp trong thí nghiệm này.
 
 ### 4.3 — `qlora`
 
-QLoRA sử dụng quantization để giảm yêu cầu bộ nhớ GPU so với full-precision LoRA. Đổi lại, kết quả target của QLoRA chỉ đạt 0.940, thấp hơn `correct` 0.975, và latency cũng cao hơn: khoảng 1813.7 ms so với 1443.0 ms. Với kết quả đo được trong lab này, QLoRA không phải lựa chọn tốt nhất cho dòng model/configuration hiện tại khi GPU T4 vẫn có thể chạy LoRA 16-bit.
+`qlora` sử dụng LoRA trên toàn bộ text-linear layers với `r=16` và learning rate `1e-4`, nhưng model được quantize xuống **4-bit**.
 
----
+Kết quả train loss cuối:
+
+* `correct`: **0.6266**
+* `qlora`: **0.7058**
+
+QLoRA đạt loss cao hơn một chút so với LoRA 16-bit. Tuy nhiên, ưu điểm rõ ràng nhất nằm ở bộ nhớ GPU:
+
+* LoRA 16-bit: **12.01 GB VRAM**
+* QLoRA 4-bit: **7.09 GB VRAM**
+
+Như vậy, QLoRA giảm khoảng **4.92 GB VRAM**, tương đương khoảng **41%** so với cấu hình `correct`.
+
+Đổi lại, thời gian training tăng:
+
+* `correct`: **987.0 s**
+* `qlora`: **1026.3 s**
+
+Trong thí nghiệm NB4 này, QLoRA vì vậy đánh đổi **VRAM thấp hơn** để lấy **thời gian training dài hơn** và train loss cao hơn.
+
+### 4.4 — Kết luận
+
+Kết quả thực tế của NB4 cho thấy:
+
+1. **`attn_only`** đạt train loss thấp nhất (**0.5371**) nhưng phải tăng rank lên **283** để match số lượng trainable parameters với `correct`.
+2. **`wrong_lr`** cho kết quả kém nhất với train loss **1.5704**, cho thấy learning rate thấp hơn 10 lần làm quá trình thích nghi của LoRA kém hiệu quả.
+3. **`qlora`** đạt train loss **0.7058**, cao hơn `correct`, nhưng giảm peak VRAM từ **12.01 GB xuống 7.09 GB**.
+4. `correct` có train loss **0.6266**, thời gian **987.0 s** và VRAM **12.01 GB**, là baseline phù hợp để so sánh các cấu hình còn lại.
 
 ## 5. Phán quyết (NB5)
 
