@@ -1,6 +1,6 @@
 # Lab 21 — Evaluation Report
 
-**Họ tên**: Nguyen Do Khai Hoan  
+**Họ tên**: Nguyễn Đỗ Khải Hoàn
 **MSSV**: 2A202601379  
 **Ngày**: 21/08/2026  
 **Tier**: `T4`  
