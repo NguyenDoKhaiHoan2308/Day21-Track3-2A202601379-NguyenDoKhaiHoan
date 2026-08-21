@@ -1,0 +1,11 @@
+{"instruction": "Thủ đô của Việt Nam là thành phố nào?", "input": "", "output": "Hà Nội.", "label": {"answer": "Hà Nội"}}
+{"instruction": "Kể tên hai đại dương lớn nhất thế giới.", "input": "", "output": "Thái Bình Dương và Đại Tây Dương.", "label": {"answer": "Thái Bình Dương và Đại Tây Dương"}}
+{"instruction": "1 km bằng bao nhiêu mét?", "input": "", "output": "1000 mét.", "label": {"answer": "1000"}}
+{"instruction": "Viết một câu chúc mừng sinh nhật bằng tiếng Việt.", "input": "", "output": "Chúc bạn sinh nhật vui vẻ!", "label": {"answer": "sinh nhật"}}
+{"instruction": "Dịch sang tiếng Anh: 'Tôi thích đọc sách'.", "input": "", "output": "I like to read books.", "label": {"answer": "read book"}}
+{"instruction": "2 mũ 10 bằng bao nhiêu?", "input": "", "output": "1024.", "label": {"answer": "1024"}}
+{"instruction": "Nêu một lợi ích của việc tập thể dục.", "input": "", "output": "Tập thể dục giúp cải thiện sức khỏe.", "label": {"answer": "sức khỏe"}}
+{"instruction": "Ai là tác giả của Truyện Kiều?", "input": "", "output": "Nguyễn Du.", "label": {"answer": "Nguyễn Du"}}
+{"instruction": "Một năm có bao nhiêu tháng?", "input": "", "output": "Một năm có 12 tháng.", "label": {"answer": "12"}}
+{"instruction": "Nước sôi ở bao nhiêu độ C tại áp suất thường?", "input": "", "output": "100 độ C.", "label": {"answer": "100"}}
+{"instruction": "Thành phố Hồ Chí Minh trước đây có tên là gì?", "input": "", "output": "Sài Gòn.", "label": {"answer": "Sài Gòn"}}

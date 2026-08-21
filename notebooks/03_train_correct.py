@@ -82,6 +82,17 @@ def load_jsonl(p):
     return [json.loads(l) for l in open(p, encoding="utf-8") if l.strip()]
 
 train_rows = load_jsonl(split_dir / "train.jsonl")
+
+# Small replay set to reduce catastrophic forgetting.
+replay_rows = load_jsonl(ROOT / "data" / "train_replay.jsonl")
+
+print(f"original train rows = {len(train_rows)}")
+print(f"replay rows = {len(replay_rows)}")
+
+train_rows = train_rows + replay_rows
+
+print(f"total train rows = {len(train_rows)}")
+
 MASK_MODE = os.environ.get("MASK_MODE", "assistant-only")
 
 # Train on the mask you PROVED in NB1 — not on a library flag.
